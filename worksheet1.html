@@ -480,6 +480,7 @@ async function submitQuiz(){
   const scoreStr=`${score}/${shuffledQuestions.length}`;
 
   if(name!==TEST_STUDENT){
+    // Real student: save to Supabase + Google Sheets
     if(db){
       await db.from('past_continuous_attempts').insert({
         student_name:name, section:sec,
@@ -492,6 +493,18 @@ async function submitQuiz(){
       body:JSON.stringify({
         studentName:name, section:sec, score:scoreStr,
         date:getDateStr(), attemptNum:currentAttempt,
+        worksheetNum:WORKSHEET_NUM
+      })
+    }).catch(()=>{});
+  } else {
+    // TEST_STUDENT (Kyle): send to Google Sheets only (not Supabase)
+    // Logged as "[TEST] Kyle" so teacher can verify the Sheets integration
+    fetch(SHEETS_URL,{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        studentName:'[TEST] Kyle', section:sec, score:scoreStr,
+        date:getDateStr(), attemptNum:1,
         worksheetNum:WORKSHEET_NUM
       })
     }).catch(()=>{});
@@ -521,7 +534,7 @@ function showScore(name,sec,score){
   const retakeBtn=el('btnRetake');
   if(name===TEST_STUDENT){
     warnEl.style.display='block';
-    warnEl.textContent='🔧 TEST MODE — unlimited retakes, no data saved';
+    warnEl.textContent='🔧 TEST MODE — unlimited retakes · score sent to Sheets as [TEST] Kyle';
     warnEl.style.color='#d97706';
     retakeBtn.style.display='inline-block';
   } else {
@@ -581,4 +594,4 @@ function closeScore(){
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
   onload="try{db=window.supabase.createClient(SUPA_URL,SUPA_KEY)}catch(e){}" defer></script>
 </body>
-</html>
+</html>h
